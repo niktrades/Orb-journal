@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ORB Journal">
+<meta name="theme-color" content="#0a0c10">
+<title>ORB Journal</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --bg: #0a0c10;
+    --surface: #0d1117;
+    --border: #1a2030;
+    --green: #00ff88;
+    --red: #ff6b6b;
+    --gold: #ffd700;
+    --cyan: #00ccff;
+    --text: #e2e8f0;
+    --muted: #4a5568;
+    --dim: #2a3545;
+  }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Mono', monospace; overflow: hidden; }
+  #app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+  .header { background: var(--bg); border-bottom: 1px solid var(--border); padding: 12px 16px 0; flex-shrink: 0; padding-top: max(12px, env(safe-area-inset-top)); }
+  .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--green); letter-spacing: 3px; text-shadow: 0 0 20px #00ff8870; }
+  .logo span { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--dim); letter-spacing: 2px; display: block; margin-top: -2px; }
+  .add-btn { background: var(--green); color: var(--bg); border: none; font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 1px; padding: 8px 14px; border-radius: 4px; cursor: pointer; }
+  .cancel-btn { background: var(--border); color: var(--text); }
+  .tabs { display: flex; gap: 0; }
+  .tab { flex: 1; background: none; border: none; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px; color: var(--muted); padding: 8px 0; cursor: pointer; text-transform: uppercase; border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .tab.active { color: var(--green); border-bottom-color: var(--green); }
+  .content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+  .stats-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px 12px 0; }
+  .stat-mini { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; }
+  .stat-mini .slabel { font-size: 9px; color: var(--dim); letter-spacing: 2px; margin-bottom: 4px; }
+  .stat-mini .sval { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1px; }
+  .form-wrap { padding: 12px; }
+  .form-card { background: var(--surface); border: 1px solid #00ff8830; border-radius: 8px; padding: 16px; box-shadow: 0 0 30px #00ff8806; }
+  .form-title { font-size: 10px; color: var(--green); letter-spacing: 3px; margin-bottom: 14px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field.full { grid-column: 1 / -1; }
+  .field label { font-size: 9px; color: var(--dim); letter-spacing: 2px; text-transform: uppercase; }
+  .field input, .field select, .field textarea { background: var(--bg); border: 1px solid var(--border); color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; padding: 9px 10px; border-radius: 4px; outline: none; width: 100%; -webkit-appearance: none; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--green); }
+  .field textarea { resize: none; }
+  .checkbox-row { display: flex; align-items: center; gap: 10px; padding: 10px 0 2px; grid-column: 1 / -1; }
+  .checkbox-row input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--green); cursor: pointer; }
+  .checkbox-row label { font-size: 12px; color: var(--muted); cursor: pointer; }
+  .submit-btn { width: 100%; margin-top: 14px; background: var(--green); color: var(--bg); border: none; font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 2px; padding: 12px; border-radius: 4px; cursor: pointer; }
+  .trades-list { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--dim); }
+  .empty-state .big { font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 4px; }
+  .empty-state .small { font-size: 10px; letter-spacing: 2px; margin-top: 6px; }
+  .trade-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px; border-left: 3px solid var(--border); }
+  .trade-card.win { border-left-color: var(--green); }
+  .trade-card.loss { border-left-color: var(--red); }
+  .trade-card.breakeven { border-left-color: var(--gold); }
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .card-pair { font-size: 16px; font-weight: 500; color: var(--text); }
+  .card-date { font-size: 10px; color: var(--muted); }
+  .card-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .badge { font-size: 10px; letter-spacing: 1px; padding: 2px 8px; border-radius: 3px; }
+  .badge.long { color: var(--green); background: #00ff8815; }
+  .badge.short { color: var(--red); background: #ff6b6b15; }
+  .badge.win { color: var(--green); background: #00ff8815; }
+  .badge.loss { color: var(--red); background: #ff6b6b15; }
+  .badge.be { color: var(--gold); background: #ffd70015; }
+  .badge.early { color: var(--gold); background: #ffd70015; }
+  .card-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .card-row span:last-child { color: var(--text); }
+  .card-pnl { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; }
+  .card-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .card-btn { flex: 1; background: var(--border); color: var(--muted); border: none; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px; padding: 7px; border-radius: 3px; cursor: pointer; }
+  .card-btn.del { color: var(--red); }
+  .card-notes { font-size: 11px; color: var(--muted); margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); line-height: 1.5; }
+  .stats-wrap { padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+  .stats-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+  .stats-card-title { font-size: 10px; color: var(--dim); letter-spacing: 3px; margin-bottom: 14px; text-transform: uppercase; }
+  .stat-row { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-row .key { color: var(--muted); }
+  .stat-row .val { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 1px; }
+  .bar-item { margin-bottom: 12px; }
+  .bar-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+  .bar-track { height: 4px; background: var(--border); border-radius: 2px; }
+  .bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+  .tip-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tip-card { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 12px; }
+  .tip-icon { font-size: 18px; margin-bottom: 4px; }
+  .tip-title { font-size: 11px; color: var(--green); letter-spacing: 1px; margin-bottom: 4px; }
+  .tip-text { font-size: 10px; color: var(--muted); line-height: 1.6; }
+  .content::-webkit-scrollbar { width: 3px; }
+  .content::-webkit-scrollbar-thumb { background: var(--green); border-radius: 2px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <div class="header-top">
+      <div class="logo">ORB JOURNAL<span>15M STRATEGY TRACKER</span></div>
+      <button class="add-btn" id="toggleFormBtn" onclick="toggleForm()">+ NEW TRADE</button>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('journal', this)">JOURNAL</button>
+      <button class="tab" onclick="showTab('stats', this)">STATS</button>
+    </div>
+  </div>
+  <div class="content" id="mainContent">
+    <div class="stats-bar" id="statsBar"></div>
+    <div class="form-wrap" id="formWrap" style="display:none;">
+      <div class="form-card">
+        <div class="form-title" id="formTitle">▸ LOG NEW TRADE</div>
+        <div class="form-grid">
+          <div class="field"><label>Date</label><input type="date" id="f-date"></div>
+          <div class="field"><label>Pair</label><input type="text" id="f-pair" placeholder="e.g. EURUSD"></div>
+          <div class="field"><label>ORB Break Time</label><input type="time" id="f-breaktime"></div>
+          <div class="field"><label>Direction</label>
+            <select id="f-direction"><option>Long</option><option>Short</option></select>
+          </div>
+          <div class="field"><label>Entry Price</label><input type="number" id="f-entry" placeholder="0.00" step="any"></div>
+          <div class="field"><label>Stop Loss</label><input type="number" id="f-sl" placeholder="0.00" step="any"></div>
+          <div class="field"><label>TP1 Price</label><input type="number" id="f-tp1" placeholder="0.00" step="any"></div>
+          <div class="field"><label>TP2 Price</label><input type="number" id="f-tp2" placeholder="0.00 (opt)" step="any"></div>
+          <div class="field"><label>Exit Price</label><input type="number" id="f-exit" placeholder="0.00" step="any"></div>
+          <div class="field"><label>Exit Type</label>
+            <select id="f-exittype">
+              <option>TP1 (8:00-8:30 Reversal)</option>
+              <option>TP2 (Trend Runner)</option>
+              <option>Early Cut</option>
+              <option>Stop Loss</option>
+              <option>Breakeven Exit</option>
+            </select>
+          </div>
+          <div class="field"><label>Outcome</label>
+            <select id="f-outcome"><option>Win</option><option>Loss</option><option>Breakeven</option></select>
+          </div>
+          <div class="field"><label>P&amp;L (in R)</label><input type="number" id="f-pnl" placeholder="e.g. 1.5 or -1" step="any"></div>
+          <div class="field"><label>Risk:Reward</label><input type="number" id="f-rr" placeholder="e.g. 2.5" step="any"></div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="f-earlycut">
+            <label for="f-earlycut">✂️ Cut loss early (before full SL)</label>
+          </div>
+          <div class="field full"><label>Notes / Observations</label>
+            <textarea id="f-notes" rows="3" placeholder="Market context, confluences, what went right/wrong..."></textarea>
+          </div>
+        </div>
+        <button class="submit-btn" onclick="submitTrade()">LOG TRADE</button>
+      </div>
+    </div>
+    <div id="journalView">
+      <div class="trades-list" id="tradesList"></div>
+    </div>
+    <div id="statsView" style="display:none;">
+      <div class="stats-wrap" id="statsContent"></div>
+    </div>
+  </div>
+</div>
+<script>
+  let trades = JSON.parse(localStorage.getItem('orb_trades') || '[]');
+  let editId = null;
+  let currentTab = 'journal';
+  let formOpen = false;
+  function save() { localStorage.setItem('orb_trades', JSON.stringify(trades)); }
+  function today() { return new Date().toISOString().slice(0,10); }
+  function formatDate(d) {
+    if (!d) return '';
+    const dt = new Date(d + 'T00:00:00');
+    return dt.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+  }
+  function getStats() {
+    const total = trades.length;
+    const wins = trades.filter(t => t.outcome === 'Win').length;
+    const losses = trades.filter(t => t.outcome === 'Loss').length;
+    const be = trades.filter(t => t.outcome === 'Breakeven').length;
+    const winRate = total ? ((wins/total)*100).toFixed(1) : 0;
+    const totalPnl = trades.reduce((a,t) => a + (parseFloat(t.pnl)||0), 0);
+    const tp1 = trades.filter(t => t.exitType === 'TP1 (8:00-8:30 Reversal)').length;
+    const tp2 = trades.filter(t => t.exitType === 'TP2 (Trend Runner)').length;
+    const early = trades.filter(t => t.cutEarly).length;
+    const sl = trades.filter(t => t.exitType === 'Stop Loss').length;
+    const rrTrades = trades.filter(t => t.rr);
+    const avgRR = rrTrades.length ? (rrTrades.reduce((a,t)=>a+(parseFloat(t.rr)||0),0)/rrTrades.length).toFixed(2) : 0;
+    return { total, wins, losses, be, winRate, totalPnl, tp1, tp2, early, sl, avgRR };
+  }
+  function renderStatsBar() {
+    const s = getStats();
+    const pnlStr = s.totalPnl >= 0 ? '+'+s.totalPnl.toFixed(1)+'R' : s.totalPnl.toFixed(1)+'R';
+    document.getElementById('statsBar').innerHTML = `
+      <div class="stat-mini"><div class="slabel">TRADES</div><div class="sval" style="color:var(--text)">${s.total}</div></div>
+      <div class="stat-mini"><div class="slabel">WIN RATE</div><div class="sval" style="color:${parseFloat(s.winRate)>=50?'var(--green)':'var(--red)'}">${s.winRate}%</div></div>
+      <div class="stat-mini"><div class="slabel">P&L</div><div class="sval" style="color:${s.totalPnl>=0?'var(--green)':'var(--red)'}">${pnlStr}</div></div>`;
+  }
+  function renderTrades() {
+    const list = document.getElementById('tradesList');
+    if (trades.length === 0) {
+      list.innerHTML = '<div class="empty-state"><div class="big">NO TRADES YET</div><div class="small">TAP + NEW TRADE TO START LOGGING</div></div>';
+      return;
+    }
+    list.innerHTML = [...trades].reverse().map(t => {
+      const oc = t.outcome === 'Win' ? 'win' : t.outcome === 'Loss' ? 'loss' : 'breakeven';
+      const pnlColor = parseFloat(t.pnl) >= 0 ? 'var(--green)' : 'var(--red)';
+      const pnlStr = t.pnl ? (parseFloat(t.pnl)>=0?'+'+t.pnl+'R':t.pnl+'R') : '—';
+      return `<div class="trade-card ${oc}">
+        <div class="card-top">
+          <div><div class="card-pair">${t.pair||'—'}</div><div class="card-date">${formatDate(t.date)}${t.orbBreakTime?' · Break: '+t.orbBreakTime:''}</div></div>
+          <div class="card-pnl" style="color:${pnlColor}">${pnlStr}</div>
+        </div>
+        <div class="card-badges">
+          <span class="badge ${t.direction==='Long'?'long':'short'}">${t.direction==='Long'?'▲ LONG':'▼ SHORT'}</span>
+          <span class="badge ${oc==='win'?'win':oc==='loss'?'loss':'be'}">${t.outcome.toUpperCase()}</span>
+          ${t.cutEarly?'<span class="badge early">✂️ EARLY CUT</span>':''}
+        </div>
+        <div class="card-row"><span>Exit Type</span><span>${t.exitType||'—'}</span></div>
+        ${t.entry?'<div class="card-row"><span>Entry / Exit</span><span>'+t.entry+' → '+(t.exitPrice||'—')+'</span></div>':''}
+        ${t.rr?'<div class="card-row"><span>R:R</span><span style="color:var(--gold)">'+t.rr+':1</span></div>':''}
+        ${t.notes?'<div class="card-notes">'+t.notes+'</div>':''}
+        <div class="card-actions">
+          <button class="card-btn" onclick="editTrade(${t.id})">EDIT</button>
+          <button class="card-btn del" onclick="deleteTrade(${t.id})">DELETE</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  function renderStats() {
+    const s = getStats();
+    const pnlStr = s.totalPnl >= 0 ? '+'+s.totalPnl.toFixed(1)+'R' : s.totalPnl.toFixed(1)+'R';
+    const barItem = (label, val, total, color) => {
+      const pct = total ? Math.round((val/total)*100) : 0;
+      return '<div class="bar-item"><div class="bar-label"><span>'+label+'</span><span style="color:'+color+'">'+val+' ('+pct+'%)</span></div><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+color+'"></div></div></div>';
+    };
+    document.getElementById('statsContent').innerHTML = `
+      <div class="stats-card">
+        <div class="stats-card-title">PERFORMANCE</div>
+        <div class="stat-row"><span class="key">Win Rate</span><span class="val" style="color:${parseFloat(s.winRate)>=50?'var(--green)':'var(--red)'}">${s.winRate}%</span></div>
+        <div class="stat-row"><span class="key">Wins</span><span class="val" style="color:var(--green)">${s.wins}</span></div>
+        <div class="stat-row"><span class="key">Losses</span><span class="val" style="color:var(--red)">${s.losses}</span></div>
+        <div class="stat-row"><span class="key">Avg R:R</span><span class="val" style="color:var(--gold)">${s.avgRR}:1</span></div>
+        <div class="stat-row"><span class="key">Total P&L</span><span class="val" style="color:${s.totalPnl>=0?'var(--green)':'var(--red)'}">${pnlStr}</span></div>
+      </div>
+      <div class="stats-card">
+        <div class="stats-card-title">EXIT TYPE BREAKDOWN</div>
+        ${barItem('TP1 — 8:00-8:30 Reversal', s.tp1, s.total, 'var(--green)')}
+        ${barItem('TP2 — Trend Runner', s.tp2, s.total, 'var(--cyan)')}
+        ${barItem('Early Cut (pre-SL)', s.early, s.total, 'var(--gold)')}
+        ${barItem('Full Stop Loss Hit', s.sl, s.total, 'var(--red)')}
+      </div>
+      <div class="stats-card">
+        <div class="stats-card-title">STRATEGY REMINDERS</div>
+        <div class="tip-cards">
+          <div class="tip-card"><div class="tip-icon">⚡</div><div class="tip-title">ORB BREAKOUT</div><div class="tip-text">Enter on 15m candle breakout of opening range</div></div>
+          <div class="tip-card"><div class="tip-icon">🎯</div><div class="tip-title">TP1 ZONE</div><div class="tip-text">8:00–8:30 London reversal — take partial profits</div></div>
+          <div class="tip-card"><div class="tip-icon">📈</div><div class="tip-title">TP2 RUNNER</div><div class="tip-text">Let remainder ride to catch the bigger trend</div></div>
+          <div class="tip-card"><div class="tip-icon">✂️</div><div class="tip-title">EARLY CUT</div><div class="tip-text">Cut weak trades before SL — track these to refine</div></div>
+        </div>
+      </div>`;
+  }
+  function render() { renderStatsBar(); if (currentTab==='journal') renderTrades(); else renderStats(); }
+  function showTab(tab, el) {
+    currentTab = tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('journalView').style.display = tab==='journal' ? '' : 'none';
+    document.getElementById('statsView').style.display = tab==='stats' ? '' : 'none';
+    if (tab==='stats') renderStats(); else renderTrades();
+  }
+  function toggleForm() {
+    formOpen = !formOpen;
+    document.getElementById('formWrap').style.display = formOpen ? '' : 'none';
+    document.getElementById('toggleFormBtn').textContent = formOpen ? '✕ CANCEL' : '+ NEW TRADE';
+    document.getElementById('toggleFormBtn').className = formOpen ? 'add-btn cancel-btn' : 'add-btn';
+    if (formOpen && !editId) resetForm();
+  }
+  function resetForm() {
+    document.getElementById('f-date').value = today();
+    ['f-pair','f-breaktime','f-entry','f-sl','f-tp1','f-tp2','f-exit','f-pnl','f-rr','f-notes'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-direction').value = 'Long';
+    document.getElementById('f-exittype').value = 'TP1 (8:00-8:30 Reversal)';
+    document.getElementById('f-outcome').value = 'Win';
+    document.getElementById('f-earlycut').checked = false;
+    document.getElementById('formTitle').textContent = '▸ LOG NEW TRADE';
+    document.querySelector('.submit-btn').textContent = 'LOG TRADE';
+    editId = null;
+  }
+  function submitTrade() {
+    const data = {
+      id: editId || Date.now(),
+      date: document.getElementById('f-date').value,
+      pair: document.getElementById('f-pair').value.toUpperCase(),
+      orbBreakTime: document.getElementById('f-breaktime').value,
+      direction: document.getElementById('f-direction').value,
+      entry: document.getElementById('f-entry').value,
+      sl: document.getElementById('f-sl').value,
+      tp1: document.getElementById('f-tp1').value,
+      tp2: document.getElementById('f-tp2').value,
+      exitPrice: document.getElementById('f-exit').value,
+      exitType: document.getElementById('f-exittype').value,
+      outcome: document.getElementById('f-outcome').value,
+      pnl: document.getElementById('f-pnl').value,
+      rr: document.getElementById('f-rr').value,
+      notes: document.getElementById('f-notes').value,
+      cutEarly: document.getElementById('f-earlycut').checked,
+    };
+    if (!data.pair) { alert('Please enter a pair/instrument.'); return; }
+    if (editId) { trades = trades.map(t => t.id === editId ? data : t); }
+    else { trades.push(data); }
+    save(); toggleForm(); resetForm(); render();
+  }
+  function editTrade(id) {
+    const t = trades.find(x => x.id === id);
+    if (!t) return;
+    editId = id;
+    document.getElementById('f-date').value = t.date;
+    document.getElementById('f-pair').value = t.pair;
+    document.getElementById('f-breaktime').value = t.orbBreakTime||'';
+    document.getElementById('f-direction').value = t.direction;
+    document.getElementById('f-entry').value = t.entry;
+    document.getElementById('f-sl').value = t.sl;
+    document.getElementById('f-tp1').value = t.tp1;
+    document.getElementById('f-tp2').value = t.tp2;
+    document.getElementById('f-exit').value = t.exitPrice;
+    document.getElementById('f-exittype').value = t.exitType;
+    document.getElementById('f-outcome').value = t.outcome;
+    document.getElementById('f-pnl').value = t.pnl;
+    document.getElementById('f-rr').value = t.rr;
+    document.getElementById('f-notes').value = t.notes;
+    document.getElementById('f-earlycut').checked = t.cutEarly;
+    document.getElementById('formTitle').textContent = '▸ EDIT TRADE';
+    document.querySelector('.submit-btn').textContent = 'UPDATE TRADE';
+    if (!formOpen) toggleForm();
+    document.getElementById('formWrap').scrollIntoView({ behavior:'smooth' });
+  }
+  function deleteTrade(id) {
+    if (!confirm('Delete this trade?')) return;
+    trades = trades.filter(t => t.id !== id);
+    save(); render();
+  }
+  render();
+</script>
+</body>
+</html>
