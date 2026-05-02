@@ -12,16 +12,9 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   :root {
-    --bg: #0a0c10;
-    --surface: #0d1117;
-    --border: #1a2030;
-    --green: #00ff88;
-    --red: #ff6b6b;
-    --gold: #ffd700;
-    --cyan: #00ccff;
-    --text: #e2e8f0;
-    --muted: #4a5568;
-    --dim: #2a3545;
+    --bg: #0a0c10; --surface: #0d1117; --border: #1a2030;
+    --green: #00ff88; --red: #ff6b6b; --gold: #ffd700;
+    --cyan: #00ccff; --text: #e2e8f0; --muted: #4a5568; --dim: #2a3545;
   }
   html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Mono', monospace; overflow: hidden; }
   #app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
@@ -31,7 +24,7 @@
   .logo span { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--dim); letter-spacing: 2px; display: block; margin-top: -2px; }
   .add-btn { background: var(--green); color: var(--bg); border: none; font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 1px; padding: 8px 14px; border-radius: 4px; cursor: pointer; }
   .cancel-btn { background: var(--border); color: var(--text); }
-  .tabs { display: flex; gap: 0; }
+  .tabs { display: flex; }
   .tab { flex: 1; background: none; border: none; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px; color: var(--muted); padding: 8px 0; cursor: pointer; text-transform: uppercase; border-bottom: 2px solid transparent; transition: all 0.2s; }
   .tab.active { color: var(--green); border-bottom-color: var(--green); }
   .content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
@@ -95,6 +88,33 @@
   .tip-icon { font-size: 18px; margin-bottom: 4px; }
   .tip-title { font-size: 11px; color: var(--green); letter-spacing: 1px; margin-bottom: 4px; }
   .tip-text { font-size: 10px; color: var(--muted); line-height: 1.6; }
+
+  /* RISK CALCULATOR */
+  .risk-wrap { padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+  .risk-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+  .risk-title { font-size: 10px; color: var(--green); letter-spacing: 3px; margin-bottom: 16px; text-transform: uppercase; }
+  .instrument-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .inst-btn { background: var(--bg); border: 1px solid var(--border); color: var(--muted); font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 2px; padding: 12px; border-radius: 6px; cursor: pointer; text-align: center; transition: all 0.2s; }
+  .inst-btn.active { background: #00ff8815; border-color: var(--green); color: var(--green); }
+  .risk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .risk-field { display: flex; flex-direction: column; gap: 4px; }
+  .risk-field.full { grid-column: 1 / -1; }
+  .risk-field label { font-size: 9px; color: var(--dim); letter-spacing: 2px; text-transform: uppercase; }
+  .risk-field input, .risk-field select { background: var(--bg); border: 1px solid var(--border); color: var(--text); font-family: 'DM Mono', monospace; font-size: 14px; padding: 10px; border-radius: 4px; outline: none; width: 100%; -webkit-appearance: none; }
+  .risk-field input:focus, .risk-field select:focus { border-color: var(--green); }
+  .calc-btn { width: 100%; background: var(--green); color: var(--bg); border: none; font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 2px; padding: 13px; border-radius: 4px; cursor: pointer; margin-top: 4px; }
+  .result-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 0; }
+  .result-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--border); }
+  .result-row:last-child { border-bottom: none; }
+  .result-key { font-size: 11px; color: var(--muted); }
+  .result-val { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 1px; }
+  .warning-card { background: #ff6b6b10; border: 1px solid #ff6b6b40; border-radius: 8px; padding: 14px; }
+  .warning-title { font-size: 10px; color: var(--red); letter-spacing: 2px; margin-bottom: 6px; }
+  .warning-text { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .drawdown-bar-wrap { margin-top: 4px; }
+  .drawdown-bar-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-bottom: 6px; }
+  .drawdown-track { height: 6px; background: var(--border); border-radius: 3px; }
+  .drawdown-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
   .content::-webkit-scrollbar { width: 3px; }
   .content::-webkit-scrollbar-thumb { background: var(--green); border-radius: 2px; }
 </style>
@@ -104,21 +124,25 @@
   <div class="header">
     <div class="header-top">
       <div class="logo">ORB JOURNAL<span>15M STRATEGY TRACKER</span></div>
-      <button class="add-btn" id="toggleFormBtn" onclick="toggleForm()">+ NEW TRADE</button>
+      <button class="add-btn" id="toggleFormBtn" onclick="toggleForm()" style="display:block">+ NEW TRADE</button>
     </div>
     <div class="tabs">
       <button class="tab active" onclick="showTab('journal', this)">JOURNAL</button>
       <button class="tab" onclick="showTab('stats', this)">STATS</button>
+      <button class="tab" onclick="showTab('risk', this)">RISK</button>
     </div>
   </div>
-  <div class="content" id="mainContent">
+
+  <div class="content">
     <div class="stats-bar" id="statsBar"></div>
+
+    <!-- Trade Form -->
     <div class="form-wrap" id="formWrap" style="display:none;">
       <div class="form-card">
         <div class="form-title" id="formTitle">▸ LOG NEW TRADE</div>
         <div class="form-grid">
           <div class="field"><label>Date</label><input type="date" id="f-date"></div>
-          <div class="field"><label>Pair</label><input type="text" id="f-pair" placeholder="e.g. EURUSD"></div>
+          <div class="field"><label>Pair</label><input type="text" id="f-pair" placeholder="e.g. XAUUSD"></div>
           <div class="field"><label>ORB Break Time</label><input type="time" id="f-breaktime"></div>
           <div class="field"><label>Direction</label>
             <select id="f-direction"><option>Long</option><option>Short</option></select>
@@ -146,70 +170,159 @@
             <input type="checkbox" id="f-earlycut">
             <label for="f-earlycut">✂️ Cut loss early (before full SL)</label>
           </div>
-          <div class="field full"><label>Notes / Observations</label>
+          <div class="field full"><label>Notes</label>
             <textarea id="f-notes" rows="3" placeholder="Market context, confluences, what went right/wrong..."></textarea>
           </div>
         </div>
         <button class="submit-btn" onclick="submitTrade()">LOG TRADE</button>
       </div>
     </div>
-    <div id="journalView">
-      <div class="trades-list" id="tradesList"></div>
-    </div>
-    <div id="statsView" style="display:none;">
-      <div class="stats-wrap" id="statsContent"></div>
+
+    <!-- Journal -->
+    <div id="journalView"><div class="trades-list" id="tradesList"></div></div>
+
+    <!-- Stats -->
+    <div id="statsView" style="display:none;"><div class="stats-wrap" id="statsContent"></div></div>
+
+    <!-- Risk Calculator -->
+    <div id="riskView" style="display:none;">
+      <div class="risk-wrap">
+        <div class="risk-card">
+          <div class="risk-title">▸ MORNING RISK CALCULATOR</div>
+          <div class="instrument-row">
+            <button class="inst-btn active" id="btn-xauusd" onclick="selectInstrument('XAUUSD')">XAUUSD<br><span style="font-size:9px;color:var(--dim)">SPOT GOLD</span></button>
+            <button class="inst-btn" id="btn-mgc" onclick="selectInstrument('MGC')">MGC<br><span style="font-size:9px;color:var(--dim)">MICRO GOLD</span></button>
+          </div>
+          <div class="risk-grid">
+            <div class="risk-field"><label>ORB HIGH</label><input type="number" id="r-high" placeholder="e.g. 3285.50" step="any" oninput="calculate()"></div>
+            <div class="risk-field"><label>ORB LOW</label><input type="number" id="r-low" placeholder="e.g. 3272.00" step="any" oninput="calculate()"></div>
+            <div class="risk-field"><label>DIRECTION</label>
+              <select id="r-dir" onchange="calculate()"><option value="long">▲ LONG (above high)</option><option value="short">▼ SHORT (below low)</option></select>
+            </div>
+            <div class="risk-field"><label>RISK PER TRADE ($)</label>
+              <select id="r-risk" onchange="calculate()">
+                <option value="250">$250 (0.5%)</option>
+                <option value="500" selected>$500 (1%)</option>
+                <option value="750">$750 (1.5%)</option>
+                <option value="1000">$1000 (2%)</option>
+              </select>
+            </div>
+            <div class="risk-field full"><label>LOSSES TODAY ($) — tracks drawdown</label>
+              <input type="number" id="r-losses" placeholder="0" value="0" step="any" oninput="calculate()">
+            </div>
+          </div>
+        </div>
+
+        <!-- Results -->
+        <div class="result-card" id="resultsCard" style="display:none;">
+          <div class="result-row"><span class="result-key">Instrument</span><span class="result-val" id="res-instrument" style="color:var(--gold)">—</span></div>
+          <div class="result-row"><span class="result-key">ORB Range</span><span class="result-val" id="res-range" style="color:var(--text)">—</span></div>
+          <div class="result-row"><span class="result-key">Entry Zone</span><span class="result-val" id="res-entry" style="color:var(--cyan)">—</span></div>
+          <div class="result-row"><span class="result-key">Stop Loss</span><span class="result-val" id="res-sl" style="color:var(--red)">—</span></div>
+          <div class="result-row"><span class="result-key">Position Size</span><span class="result-val" id="res-size" style="color:var(--green)">—</span></div>
+          <div class="result-row"><span class="result-key">$ At Risk</span><span class="result-val" id="res-dollar" style="color:var(--green)">—</span></div>
+          <div class="result-row"><span class="result-key">TP1 Target</span><span class="result-val" id="res-tp1" style="color:var(--green)">—</span></div>
+          <div class="result-row"><span class="result-key">TP2 Target (2R)</span><span class="result-val" id="res-tp2" style="color:var(--green)">—</span></div>
+          <div class="result-row"><span class="result-key">Trades Left Today</span><span class="result-val" id="res-trades" style="color:var(--gold)">—</span></div>
+        </div>
+
+        <!-- Drawdown tracker -->
+        <div class="risk-card" id="drawdownCard" style="display:none;">
+          <div class="risk-title">▸ DRAWDOWN TRACKER</div>
+          <div class="drawdown-bar-wrap">
+            <div class="drawdown-bar-label">
+              <span id="dd-used">$0 used</span>
+              <span id="dd-left" style="color:var(--green)">$2000 remaining</span>
+            </div>
+            <div class="drawdown-track">
+              <div class="drawdown-fill" id="dd-fill" style="width:0%;background:var(--green)"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Warning -->
+        <div class="warning-card" id="warningCard" style="display:none;">
+          <div class="warning-title">⚠️ RISK WARNING</div>
+          <div class="warning-text" id="warningText"></div>
+        </div>
+
+        <!-- Instrument info -->
+        <div class="risk-card">
+          <div class="risk-title">▸ INSTRUMENT SPECS</div>
+          <div class="result-row" style="padding:8px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:11px;color:var(--muted)">XAUUSD (Spot Gold)</span>
+            <span style="font-size:11px;color:var(--text)">$1 per $1 move / 0.01 lot</span>
+          </div>
+          <div class="result-row" style="padding:8px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:11px;color:var(--muted)">MGC (Micro Gold)</span>
+            <span style="font-size:11px;color:var(--text)">$1 per $1 move / contract</span>
+          </div>
+          <div class="result-row" style="padding:8px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:11px;color:var(--muted)">Account Size</span>
+            <span style="font-size:11px;color:var(--gold)">$50,000</span>
+          </div>
+          <div class="result-row" style="padding:8px 0;">
+            <span style="font-size:11px;color:var(--muted)">Max Drawdown</span>
+            <span style="font-size:11px;color:var(--red)">$2,000</span>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
+
 <script>
+  // ── TRADES ──
   let trades = JSON.parse(localStorage.getItem('orb_trades') || '[]');
-  let editId = null;
-  let currentTab = 'journal';
-  let formOpen = false;
+  let editId = null, currentTab = 'journal', formOpen = false;
+  let selectedInstrument = 'XAUUSD';
+
   function save() { localStorage.setItem('orb_trades', JSON.stringify(trades)); }
   function today() { return new Date().toISOString().slice(0,10); }
   function formatDate(d) {
     if (!d) return '';
-    const dt = new Date(d + 'T00:00:00');
-    return dt.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+    return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
   }
+
   function getStats() {
     const total = trades.length;
-    const wins = trades.filter(t => t.outcome === 'Win').length;
-    const losses = trades.filter(t => t.outcome === 'Loss').length;
-    const be = trades.filter(t => t.outcome === 'Breakeven').length;
-    const winRate = total ? ((wins/total)*100).toFixed(1) : 0;
-    const totalPnl = trades.reduce((a,t) => a + (parseFloat(t.pnl)||0), 0);
-    const tp1 = trades.filter(t => t.exitType === 'TP1 (8:00-8:30 Reversal)').length;
-    const tp2 = trades.filter(t => t.exitType === 'TP2 (Trend Runner)').length;
-    const early = trades.filter(t => t.cutEarly).length;
-    const sl = trades.filter(t => t.exitType === 'Stop Loss').length;
-    const rrTrades = trades.filter(t => t.rr);
-    const avgRR = rrTrades.length ? (rrTrades.reduce((a,t)=>a+(parseFloat(t.rr)||0),0)/rrTrades.length).toFixed(2) : 0;
-    return { total, wins, losses, be, winRate, totalPnl, tp1, tp2, early, sl, avgRR };
+    const wins = trades.filter(t=>t.outcome==='Win').length;
+    const losses = trades.filter(t=>t.outcome==='Loss').length;
+    const be = trades.filter(t=>t.outcome==='Breakeven').length;
+    const winRate = total?((wins/total)*100).toFixed(1):0;
+    const totalPnl = trades.reduce((a,t)=>a+(parseFloat(t.pnl)||0),0);
+    const tp1 = trades.filter(t=>t.exitType==='TP1 (8:00-8:30 Reversal)').length;
+    const tp2 = trades.filter(t=>t.exitType==='TP2 (Trend Runner)').length;
+    const early = trades.filter(t=>t.cutEarly).length;
+    const sl = trades.filter(t=>t.exitType==='Stop Loss').length;
+    const rrT = trades.filter(t=>t.rr);
+    const avgRR = rrT.length?(rrT.reduce((a,t)=>a+(parseFloat(t.rr)||0),0)/rrT.length).toFixed(2):0;
+    return {total,wins,losses,be,winRate,totalPnl,tp1,tp2,early,sl,avgRR};
   }
+
   function renderStatsBar() {
     const s = getStats();
-    const pnlStr = s.totalPnl >= 0 ? '+'+s.totalPnl.toFixed(1)+'R' : s.totalPnl.toFixed(1)+'R';
+    const pnl = s.totalPnl>=0?'+'+s.totalPnl.toFixed(1)+'R':s.totalPnl.toFixed(1)+'R';
     document.getElementById('statsBar').innerHTML = `
       <div class="stat-mini"><div class="slabel">TRADES</div><div class="sval" style="color:var(--text)">${s.total}</div></div>
       <div class="stat-mini"><div class="slabel">WIN RATE</div><div class="sval" style="color:${parseFloat(s.winRate)>=50?'var(--green)':'var(--red)'}">${s.winRate}%</div></div>
-      <div class="stat-mini"><div class="slabel">P&L</div><div class="sval" style="color:${s.totalPnl>=0?'var(--green)':'var(--red)'}">${pnlStr}</div></div>`;
+      <div class="stat-mini"><div class="slabel">P&L</div><div class="sval" style="color:${s.totalPnl>=0?'var(--green)':'var(--red)'}">${pnl}</div></div>`;
   }
+
   function renderTrades() {
     const list = document.getElementById('tradesList');
-    if (trades.length === 0) {
-      list.innerHTML = '<div class="empty-state"><div class="big">NO TRADES YET</div><div class="small">TAP + NEW TRADE TO START LOGGING</div></div>';
+    if (!trades.length) {
+      list.innerHTML='<div class="empty-state"><div class="big">NO TRADES YET</div><div class="small">TAP + NEW TRADE TO START LOGGING</div></div>';
       return;
     }
-    list.innerHTML = [...trades].reverse().map(t => {
-      const oc = t.outcome === 'Win' ? 'win' : t.outcome === 'Loss' ? 'loss' : 'breakeven';
-      const pnlColor = parseFloat(t.pnl) >= 0 ? 'var(--green)' : 'var(--red)';
-      const pnlStr = t.pnl ? (parseFloat(t.pnl)>=0?'+'+t.pnl+'R':t.pnl+'R') : '—';
+    list.innerHTML=[...trades].reverse().map(t=>{
+      const oc=t.outcome==='Win'?'win':t.outcome==='Loss'?'loss':'breakeven';
+      const pc=parseFloat(t.pnl)>=0?'var(--green)':'var(--red)';
+      const ps=t.pnl?(parseFloat(t.pnl)>=0?'+'+t.pnl+'R':t.pnl+'R'):'—';
       return `<div class="trade-card ${oc}">
         <div class="card-top">
-          <div><div class="card-pair">${t.pair||'—'}</div><div class="card-date">${formatDate(t.date)}${t.orbBreakTime?' · Break: '+t.orbBreakTime:''}</div></div>
-          <div class="card-pnl" style="color:${pnlColor}">${pnlStr}</div>
+          <div><div class="card-pair">${t.pair||'—'}</div><div class="card-date">${formatDate(t.date)}${t.orbBreakTime?' · '+t.orbBreakTime:''}</div></div>
+          <div class="card-pnl" style="color:${pc}">${ps}</div>
         </div>
         <div class="card-badges">
           <span class="badge ${t.direction==='Long'?'long':'short'}">${t.direction==='Long'?'▲ LONG':'▼ SHORT'}</span>
@@ -227,28 +340,29 @@
       </div>`;
     }).join('');
   }
+
   function renderStats() {
     const s = getStats();
-    const pnlStr = s.totalPnl >= 0 ? '+'+s.totalPnl.toFixed(1)+'R' : s.totalPnl.toFixed(1)+'R';
-    const barItem = (label, val, total, color) => {
-      const pct = total ? Math.round((val/total)*100) : 0;
+    const pnl = s.totalPnl>=0?'+'+s.totalPnl.toFixed(1)+'R':s.totalPnl.toFixed(1)+'R';
+    const bar=(label,val,total,color)=>{
+      const pct=total?Math.round((val/total)*100):0;
       return '<div class="bar-item"><div class="bar-label"><span>'+label+'</span><span style="color:'+color+'">'+val+' ('+pct+'%)</span></div><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+color+'"></div></div></div>';
     };
-    document.getElementById('statsContent').innerHTML = `
+    document.getElementById('statsContent').innerHTML=`
       <div class="stats-card">
         <div class="stats-card-title">PERFORMANCE</div>
         <div class="stat-row"><span class="key">Win Rate</span><span class="val" style="color:${parseFloat(s.winRate)>=50?'var(--green)':'var(--red)'}">${s.winRate}%</span></div>
         <div class="stat-row"><span class="key">Wins</span><span class="val" style="color:var(--green)">${s.wins}</span></div>
         <div class="stat-row"><span class="key">Losses</span><span class="val" style="color:var(--red)">${s.losses}</span></div>
         <div class="stat-row"><span class="key">Avg R:R</span><span class="val" style="color:var(--gold)">${s.avgRR}:1</span></div>
-        <div class="stat-row"><span class="key">Total P&L</span><span class="val" style="color:${s.totalPnl>=0?'var(--green)':'var(--red)'}">${pnlStr}</span></div>
+        <div class="stat-row"><span class="key">Total P&L</span><span class="val" style="color:${s.totalPnl>=0?'var(--green)':'var(--red)'}">${pnl}</span></div>
       </div>
       <div class="stats-card">
         <div class="stats-card-title">EXIT TYPE BREAKDOWN</div>
-        ${barItem('TP1 — 8:00-8:30 Reversal', s.tp1, s.total, 'var(--green)')}
-        ${barItem('TP2 — Trend Runner', s.tp2, s.total, 'var(--cyan)')}
-        ${barItem('Early Cut (pre-SL)', s.early, s.total, 'var(--gold)')}
-        ${barItem('Full Stop Loss Hit', s.sl, s.total, 'var(--red)')}
+        ${bar('TP1 — 8:00-8:30 Reversal',s.tp1,s.total,'var(--green)')}
+        ${bar('TP2 — Trend Runner',s.tp2,s.total,'var(--cyan)')}
+        ${bar('Early Cut (pre-SL)',s.early,s.total,'var(--gold)')}
+        ${bar('Full Stop Loss Hit',s.sl,s.total,'var(--red)')}
       </div>
       <div class="stats-card">
         <div class="stats-card-title">STRATEGY REMINDERS</div>
@@ -260,86 +374,178 @@
         </div>
       </div>`;
   }
-  function render() { renderStatsBar(); if (currentTab==='journal') renderTrades(); else renderStats(); }
+
+  // ── RISK CALCULATOR ──
+  function selectInstrument(inst) {
+    selectedInstrument = inst;
+    document.getElementById('btn-xauusd').className = 'inst-btn' + (inst==='XAUUSD'?' active':'');
+    document.getElementById('btn-mgc').className = 'inst-btn' + (inst==='MGC'?' active':'');
+    calculate();
+  }
+
+  function calculate() {
+    const high = parseFloat(document.getElementById('r-high').value);
+    const low = parseFloat(document.getElementById('r-low').value);
+    const dir = document.getElementById('r-dir').value;
+    const risk = parseFloat(document.getElementById('r-risk').value);
+    const lossesToday = parseFloat(document.getElementById('r-losses').value) || 0;
+    const MAX_DD = 2000;
+
+    // Drawdown tracker always show
+    document.getElementById('drawdownCard').style.display = 'block';
+    const ddPct = Math.min((lossesToday/MAX_DD)*100, 100);
+    const ddLeft = Math.max(MAX_DD - lossesToday, 0);
+    document.getElementById('dd-used').textContent = '$'+lossesToday.toFixed(0)+' used';
+    document.getElementById('dd-left').textContent = '$'+ddLeft.toFixed(0)+' remaining';
+    document.getElementById('dd-fill').style.width = ddPct+'%';
+    document.getElementById('dd-fill').style.background = ddPct>=80?'var(--red)':ddPct>=50?'var(--gold)':'var(--green)';
+    document.getElementById('dd-left').style.color = ddPct>=80?'var(--red)':ddPct>=50?'var(--gold)':'var(--green)';
+
+    // Warnings
+    const wCard = document.getElementById('warningCard');
+    const wText = document.getElementById('warningText');
+    if (lossesToday >= MAX_DD) {
+      wCard.style.display='block';
+      wText.textContent='🚫 MAX DRAWDOWN HIT — Do not take any more trades today. Protect your account.';
+    } else if (lossesToday >= MAX_DD * 0.75) {
+      wCard.style.display='block';
+      wText.textContent='⚠️ You are at '+Math.round(ddPct)+'% of your daily drawdown limit. Consider reducing risk or stopping for the day.';
+    } else {
+      wCard.style.display='none';
+    }
+
+    if (!high || !low || high <= low) { document.getElementById('resultsCard').style.display='none'; return; }
+
+    const range = high - low;
+    const entry = dir==='long' ? high : low;
+    const sl = dir==='long' ? low : high;
+    const slDist = Math.abs(entry - sl);
+
+    // Position size
+    // XAUUSD: $1 per $1 move per 0.01 lot → $100 per $1 move per 1 lot
+    // MGC: $10 per $1 move per contract
+    let size, sizeLabel, dollarRisk;
+    if (selectedInstrument === 'XAUUSD') {
+      // 1 lot XAUUSD = $100 per $1 gold move
+      size = risk / (slDist * 100);
+      sizeLabel = size.toFixed(2) + ' lots';
+      dollarRisk = size * slDist * 100;
+    } else {
+      // MGC: $10 per $1 move per contract
+      size = risk / (slDist * 10);
+      sizeLabel = Math.max(1, Math.round(size)) + ' contracts';
+      dollarRisk = Math.max(1, Math.round(size)) * slDist * 10;
+    }
+
+    // TP levels — TP1 = 1R, TP2 = 2R
+    const tp1 = dir==='long' ? entry + slDist : entry - slDist;
+    const tp2 = dir==='long' ? entry + (slDist*2) : entry - (slDist*2);
+    const tradesLeft = Math.floor(ddLeft / risk);
+
+    document.getElementById('resultsCard').style.display='block';
+    document.getElementById('res-instrument').textContent = selectedInstrument;
+    document.getElementById('res-range').textContent = '$'+range.toFixed(2);
+    document.getElementById('res-entry').textContent = (dir==='long'?'Above ':'Below ')+entry.toFixed(2);
+    document.getElementById('res-sl').textContent = sl.toFixed(2);
+    document.getElementById('res-size').textContent = sizeLabel;
+    document.getElementById('res-dollar').textContent = '$'+dollarRisk.toFixed(0);
+    document.getElementById('res-tp1').textContent = tp1.toFixed(2)+' (1R)';
+    document.getElementById('res-tp2').textContent = tp2.toFixed(2)+' (2R)';
+    document.getElementById('res-trades').textContent = tradesLeft <= 0 ? 'STOP TRADING' : tradesLeft+' trades';
+    document.getElementById('res-trades').style.color = tradesLeft<=1?'var(--red)':tradesLeft<=2?'var(--gold)':'var(--gold)';
+  }
+
+  // ── UI ──
   function showTab(tab, el) {
     currentTab = tab;
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
     el.classList.add('active');
-    document.getElementById('journalView').style.display = tab==='journal' ? '' : 'none';
-    document.getElementById('statsView').style.display = tab==='stats' ? '' : 'none';
-    if (tab==='stats') renderStats(); else renderTrades();
+    document.getElementById('journalView').style.display = tab==='journal'?'':'none';
+    document.getElementById('statsView').style.display = tab==='stats'?'':'none';
+    document.getElementById('riskView').style.display = tab==='risk'?'':'none';
+    document.getElementById('toggleFormBtn').style.display = tab==='journal'?'block':'none';
+    document.getElementById('statsBar').style.display = tab==='risk'?'none':'';
+    if (formOpen && tab!=='journal') { formOpen=false; document.getElementById('formWrap').style.display='none'; }
+    if (tab==='stats') renderStats();
+    else if (tab==='journal') renderTrades();
+    else calculate();
   }
+
   function toggleForm() {
-    formOpen = !formOpen;
-    document.getElementById('formWrap').style.display = formOpen ? '' : 'none';
-    document.getElementById('toggleFormBtn').textContent = formOpen ? '✕ CANCEL' : '+ NEW TRADE';
-    document.getElementById('toggleFormBtn').className = formOpen ? 'add-btn cancel-btn' : 'add-btn';
+    formOpen=!formOpen;
+    document.getElementById('formWrap').style.display=formOpen?'':'none';
+    document.getElementById('toggleFormBtn').textContent=formOpen?'✕ CANCEL':'+ NEW TRADE';
+    document.getElementById('toggleFormBtn').className=formOpen?'add-btn cancel-btn':'add-btn';
     if (formOpen && !editId) resetForm();
   }
+
   function resetForm() {
-    document.getElementById('f-date').value = today();
-    ['f-pair','f-breaktime','f-entry','f-sl','f-tp1','f-tp2','f-exit','f-pnl','f-rr','f-notes'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('f-direction').value = 'Long';
-    document.getElementById('f-exittype').value = 'TP1 (8:00-8:30 Reversal)';
-    document.getElementById('f-outcome').value = 'Win';
-    document.getElementById('f-earlycut').checked = false;
-    document.getElementById('formTitle').textContent = '▸ LOG NEW TRADE';
-    document.querySelector('.submit-btn').textContent = 'LOG TRADE';
-    editId = null;
+    document.getElementById('f-date').value=today();
+    ['f-pair','f-breaktime','f-entry','f-sl','f-tp1','f-tp2','f-exit','f-pnl','f-rr','f-notes'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f-direction').value='Long';
+    document.getElementById('f-exittype').value='TP1 (8:00-8:30 Reversal)';
+    document.getElementById('f-outcome').value='Win';
+    document.getElementById('f-earlycut').checked=false;
+    document.getElementById('formTitle').textContent='▸ LOG NEW TRADE';
+    document.querySelector('.submit-btn').textContent='LOG TRADE';
+    editId=null;
   }
+
   function submitTrade() {
-    const data = {
-      id: editId || Date.now(),
-      date: document.getElementById('f-date').value,
-      pair: document.getElementById('f-pair').value.toUpperCase(),
-      orbBreakTime: document.getElementById('f-breaktime').value,
-      direction: document.getElementById('f-direction').value,
-      entry: document.getElementById('f-entry').value,
-      sl: document.getElementById('f-sl').value,
-      tp1: document.getElementById('f-tp1').value,
-      tp2: document.getElementById('f-tp2').value,
-      exitPrice: document.getElementById('f-exit').value,
-      exitType: document.getElementById('f-exittype').value,
-      outcome: document.getElementById('f-outcome').value,
-      pnl: document.getElementById('f-pnl').value,
-      rr: document.getElementById('f-rr').value,
-      notes: document.getElementById('f-notes').value,
-      cutEarly: document.getElementById('f-earlycut').checked,
+    const data={
+      id:editId||Date.now(),
+      date:document.getElementById('f-date').value,
+      pair:document.getElementById('f-pair').value.toUpperCase(),
+      orbBreakTime:document.getElementById('f-breaktime').value,
+      direction:document.getElementById('f-direction').value,
+      entry:document.getElementById('f-entry').value,
+      sl:document.getElementById('f-sl').value,
+      tp1:document.getElementById('f-tp1').value,
+      tp2:document.getElementById('f-tp2').value,
+      exitPrice:document.getElementById('f-exit').value,
+      exitType:document.getElementById('f-exittype').value,
+      outcome:document.getElementById('f-outcome').value,
+      pnl:document.getElementById('f-pnl').value,
+      rr:document.getElementById('f-rr').value,
+      notes:document.getElementById('f-notes').value,
+      cutEarly:document.getElementById('f-earlycut').checked,
     };
-    if (!data.pair) { alert('Please enter a pair/instrument.'); return; }
-    if (editId) { trades = trades.map(t => t.id === editId ? data : t); }
-    else { trades.push(data); }
+    if (!data.pair){alert('Please enter a pair.');return;}
+    if (editId){trades=trades.map(t=>t.id===editId?data:t);}
+    else{trades.push(data);}
     save(); toggleForm(); resetForm(); render();
   }
+
   function editTrade(id) {
-    const t = trades.find(x => x.id === id);
-    if (!t) return;
-    editId = id;
-    document.getElementById('f-date').value = t.date;
-    document.getElementById('f-pair').value = t.pair;
-    document.getElementById('f-breaktime').value = t.orbBreakTime||'';
-    document.getElementById('f-direction').value = t.direction;
-    document.getElementById('f-entry').value = t.entry;
-    document.getElementById('f-sl').value = t.sl;
-    document.getElementById('f-tp1').value = t.tp1;
-    document.getElementById('f-tp2').value = t.tp2;
-    document.getElementById('f-exit').value = t.exitPrice;
-    document.getElementById('f-exittype').value = t.exitType;
-    document.getElementById('f-outcome').value = t.outcome;
-    document.getElementById('f-pnl').value = t.pnl;
-    document.getElementById('f-rr').value = t.rr;
-    document.getElementById('f-notes').value = t.notes;
-    document.getElementById('f-earlycut').checked = t.cutEarly;
-    document.getElementById('formTitle').textContent = '▸ EDIT TRADE';
-    document.querySelector('.submit-btn').textContent = 'UPDATE TRADE';
-    if (!formOpen) toggleForm();
-    document.getElementById('formWrap').scrollIntoView({ behavior:'smooth' });
+    const t=trades.find(x=>x.id===id); if(!t) return;
+    editId=id;
+    document.getElementById('f-date').value=t.date;
+    document.getElementById('f-pair').value=t.pair;
+    document.getElementById('f-breaktime').value=t.orbBreakTime||'';
+    document.getElementById('f-direction').value=t.direction;
+    document.getElementById('f-entry').value=t.entry;
+    document.getElementById('f-sl').value=t.sl;
+    document.getElementById('f-tp1').value=t.tp1;
+    document.getElementById('f-tp2').value=t.tp2;
+    document.getElementById('f-exit').value=t.exitPrice;
+    document.getElementById('f-exittype').value=t.exitType;
+    document.getElementById('f-outcome').value=t.outcome;
+    document.getElementById('f-pnl').value=t.pnl;
+    document.getElementById('f-rr').value=t.rr;
+    document.getElementById('f-notes').value=t.notes;
+    document.getElementById('f-earlycut').checked=t.cutEarly;
+    document.getElementById('formTitle').textContent='▸ EDIT TRADE';
+    document.querySelector('.submit-btn').textContent='UPDATE TRADE';
+    if(!formOpen) toggleForm();
+    document.getElementById('formWrap').scrollIntoView({behavior:'smooth'});
   }
+
   function deleteTrade(id) {
-    if (!confirm('Delete this trade?')) return;
-    trades = trades.filter(t => t.id !== id);
-    save(); render();
+    if(!confirm('Delete this trade?')) return;
+    trades=trades.filter(t=>t.id!==id); save(); render();
   }
+
+  function render() { renderStatsBar(); if(currentTab==='journal') renderTrades(); else if(currentTab==='stats') renderStats(); }
   render();
 </script>
 </body>
